@@ -1,0 +1,421 @@
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a routerLink="/app/documents" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+  <h4 class="fw-bold mb-0">Document Detail</h4>
+</div>
+
+@if (loading()) {
+  <div class="row g-4" aria-busy="true">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-3 px-4">
+          <app-skeleton width="55%" height="1.4rem" class="mb-2" />
+          <app-skeleton width="30%" height="0.9rem" />
+        </div>
+        <div class="card-body p-4">
+          @for (_ of [1,2,3,4,5]; track $index) {
+            <div class="row mb-3">
+              <div class="col-sm-4"><app-skeleton width="80%" /></div>
+              <div class="col-sm-8"><app-skeleton width="60%" /></div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <app-skeleton width="40%" class="mb-4" />
+          @for (_ of [1,2,3,4]; track $index) {
+            <div class="d-flex gap-3 mb-3">
+              <app-skeleton width="1rem" height="1rem" radius="50%" />
+              <app-skeleton width="70%" />
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (!document()) {
+  <div class="alert alert-warning">Document not found or you do not have access.</div>
+} @else {
+  <div class="row g-4">
+    <!-- Main details -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex align-items-center justify-content-between py-3 px-4">
+          <div>
+            <h5 class="fw-bold mb-0">{{ document()!.title }}</h5>
+            <small class="text-muted">
+              <code>{{ document()!.referenceNumber }}</code>
+            </small>
+          </div>
+          <app-status-badge [status]="document()!.status" />
+        </div>
+        <div class="card-body p-4">
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted fw-normal small">Document Type</dt>
+            <dd class="col-sm-8">{{ document()!.documentType }}</dd>
+
+            @if (document()!.studentId) {
+              <dt class="col-sm-4 text-muted fw-normal small">Student ID</dt>
+              <dd class="col-sm-8">{{ document()!.studentId }}</dd>
+            }
+
+            @if (document()!.academicYear) {
+              <dt class="col-sm-4 text-muted fw-normal small">Academic Year</dt>
+              <dd class="col-sm-8">{{ document()!.academicYear }}</dd>
+            }
+
+            @if (document()!.financialAmount) {
+              <dt class="col-sm-4 text-muted fw-normal small">Amount</dt>
+              <dd class="col-sm-8">Rs. {{ document()!.financialAmount }}</dd>
+            }
+
+            <dt class="col-sm-4 text-muted fw-normal small">File Name</dt>
+            <dd class="col-sm-8">
+              {{ document()!.fileName }}
+              <span class="text-muted small">({{ formatSize(document()!.fileSize) }})</span>
+            </dd>
+
+            <dt class="col-sm-4 text-muted fw-normal small">Submitted</dt>
+            <dd class="col-sm-8">{{ formatDate(document()!.submittedAt) }}</dd>
+
+            <dt class="col-sm-4 text-muted fw-normal small">Last Updated</dt>
+            <dd class="col-sm-8">{{ formatDate(document()!.updatedAt) }}</dd>
+
+            <dt class="col-sm-4 text-muted fw-normal small">Barcode Number</dt>
+            <dd class="col-sm-8">
+              @if (isStaffOrAdmin) {
+                @if (barcodeEditing()) {
+                  <div class="d-flex align-items-center gap-2">
+                    <input type="text" class="form-control form-control-sm" style="max-width: 200px;"
+                           [(ngModel)]="barcodeInput" maxlength="50" placeholder="Enter barcode" />
+                    <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                            [disabled]="barcodeSaving() || !barcodeInput.trim()" (click)="saveBarcode()">
+                      @if (barcodeSaving()) { <app-spinner size="sm" /> }
+                      Save
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" [disabled]="barcodeSaving()" (click)="cancelBarcodeEdit()">Cancel</button>
+                  </div>
+                } @else {
+                  <span class="me-2">{{ document()!.barcodeNumber ?? 'Not assigned' }}</span>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="startBarcodeEdit()">
+                    {{ document()!.barcodeNumber ? 'Edit' : 'Assign' }}
+                  </button>
+                }
+              } @else {
+                {{ document()!.barcodeNumber ?? 'Not assigned' }}
+              }
+            </dd>
+          </dl>
+        </div>
+        <div class="card-footer bg-transparent px-4 py-3 d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary d-flex align-items-center gap-2"
+                  [disabled]="downloading()" (click)="download()">
+            @if (downloading()) { <app-spinner size="sm" /> }
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 1-.708.708z"/>
+            </svg>
+            Download
+          </button>
+          <a [routerLink]="['/app/documents', document()!.id, 'versions']"
+             class="btn btn-outline-secondary btn-sm d-flex align-items-center">
+            Version History
+          </a>
+          @if (isStaffOrAdmin || isAuditor) {
+            <a [routerLink]="['/app/audit']"
+               [queryParams]="{ entity_type: 'document', entity_id: document()!.id }"
+               class="btn btn-outline-secondary btn-sm d-flex align-items-center">
+              Audit History
+            </a>
+          }
+        </div>
+
+        <!-- ── Assignment panel (submitted, not yet assigned) ── -->
+        @if (isStaffOrAdmin && document()!.status === 'submitted') {
+          <div class="card-footer bg-transparent px-4 py-3 border-top">
+            @if (!showAssignPanel) {
+              <div class="d-flex align-items-center gap-2">
+                <span class="small text-muted">Not yet assigned.</span>
+                <button class="btn btn-sm btn-outline-primary" (click)="showAssignPanel = true">Assign</button>
+                @if (!isAdmin) {
+                  <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                    [disabled]="phaseActing()" (click)="selfAssign()">
+                    @if (phaseActing()) { <app-spinner size="sm" /> } Take this document
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="small fw-semibold mb-2">Assign to staff</p>
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select class="form-select form-select-sm" style="max-width:260px;" [(ngModel)]="assignTargetId">
+                  <option [ngValue]="null">— Select staff —</option>
+                  @for (u of staffUsers; track u.id) {
+                    <option [ngValue]="u.id">{{ u.email }}</option>
+                  }
+                </select>
+                <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                  [disabled]="phaseActing() || !assignTargetId" (click)="assignToStaff()">
+                  @if (phaseActing()) { <app-spinner size="sm" /> } Assign
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" (click)="showAssignPanel = false">Cancel</button>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── Phase panel (pending_approval with workflow) ── -->
+        @if (document()!.status === 'pending_approval' && phaseInfo()?.has_workflow) {
+          <div class="card-footer bg-transparent px-4 py-3 border-top">
+            @if (phaseLoading()) {
+              <app-spinner size="sm" />
+            } @else if (phaseInfo()) {
+              <!-- Progress bar -->
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="small fw-semibold">Phase {{ phaseInfo()!.current_step?.step_order ?? '?' }} of {{ phaseInfo()!.total_steps }}</span>
+                <div class="progress flex-grow-1" style="height:6px;">
+                  <div class="progress-bar" role="progressbar"
+                    [style.width.%]="((phaseInfo()!.current_step?.step_order ?? 0) / phaseInfo()!.total_steps) * 100">
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <span class="fw-semibold small">{{ phaseInfo()!.current_step?.phase_label }}</span>
+                <span class="text-muted small ms-2">— assigned to {{ phaseInfo()!.assigned_to?.email ?? '—' }}</span>
+                @if ((phaseInfo()!.current_step?.step_order ?? 0) === phaseInfo()!.total_steps) {
+                  <span class="badge bg-success-subtle text-success ms-2 small">Final Phase</span>
+                }
+              </div>
+
+              @if (isCurrentAssignee()) {
+                <div class="mb-2">
+                  <input type="text" class="form-control form-control-sm mb-2" style="max-width:400px;"
+                    [(ngModel)]="phaseNote" placeholder="Note (optional)" maxlength="1000" />
+
+                  <div class="d-flex gap-2 flex-wrap">
+                    @if ((phaseInfo()!.current_step?.step_order ?? 0) < phaseInfo()!.total_steps) {
+                      <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                        [disabled]="phaseActing() || confirmingReturn || !!resolveDecision"
+                        (click)="confirmAdvance()">
+                        Advance →
+                      </button>
+                    }
+                    @if ((phaseInfo()!.current_step?.step_order ?? 1) > 1) {
+                      <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
+                        [disabled]="phaseActing() || confirmingAdvance || !!resolveDecision"
+                        (click)="confirmReturn()">
+                        ← Return
+                      </button>
+                    }
+                    @if ((phaseInfo()!.current_step?.step_order ?? 0) === phaseInfo()!.total_steps && isActualAssignee()) {
+                      <button class="btn btn-sm btn-success"
+                        [disabled]="phaseActing() || confirmingAdvance || confirmingReturn"
+                        (click)="openResolve('approved')">Approve</button>
+                      <button class="btn btn-sm btn-outline-danger"
+                        [disabled]="phaseActing() || confirmingAdvance || confirmingReturn"
+                        (click)="openResolve('rejected')">Reject</button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Advance confirm -->
+                @if (confirmingAdvance) {
+                  <div class="mt-2 p-3 rounded border bg-light">
+                    <p class="small fw-semibold mb-1">Pass to next phase?</p>
+                    <p class="small text-muted mb-2">This will hand the document to the next assigned staff member.</p>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                        [disabled]="phaseActing()" (click)="advancePhase()">
+                        @if (phaseActing()) { <app-spinner size="sm" /> } Yes, Advance
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="cancelPhaseConfirm()">Cancel</button>
+                    </div>
+                  </div>
+                }
+
+                <!-- Return confirm -->
+                @if (confirmingReturn) {
+                  <div class="mt-2 p-3 rounded border bg-warning-subtle">
+                    <p class="small fw-semibold mb-1">Return to previous phase?</p>
+                    <p class="small text-muted mb-2">This will send the document back to the previous staff member for revision.</p>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-warning d-flex align-items-center gap-2"
+                        [disabled]="phaseActing()" (click)="returnPhase()">
+                        @if (phaseActing()) { <app-spinner size="sm" /> } Yes, Return
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="cancelPhaseConfirm()">Cancel</button>
+                    </div>
+                  </div>
+                }
+              } @else {
+                <p class="small text-muted fst-italic mb-0">You are not the current assignee for this phase.</p>
+              }
+
+              <!-- Resolve confirm -->
+              @if (resolveDecision) {
+                <div class="mt-3 p-3 rounded border bg-light">
+                  <p class="small fw-semibold mb-2">Confirm {{ resolveDecision }}?</p>
+                  @if (resolveDecision === 'rejected') {
+                    <textarea class="form-control form-control-sm mb-2" rows="2" maxlength="1000"
+                      [(ngModel)]="resolveNote" placeholder="Rejection reason (required)"></textarea>
+                  } @else {
+                    <input type="text" class="form-control form-control-sm mb-2" maxlength="1000"
+                      [(ngModel)]="resolveNote" placeholder="Note (optional)" />
+                  }
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                      [disabled]="phaseActing()" (click)="submitResolve()">
+                      @if (phaseActing()) { <app-spinner size="sm" /> } Confirm
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="resolveDecision = null">Cancel</button>
+                  </div>
+                </div>
+              }
+
+              <!-- Phase log -->
+              @if (phaseInfo()!.phase_log.length > 0) {
+                <div class="mt-3">
+                  <p class="small fw-semibold text-muted mb-2">Phase History</p>
+                  <div class="d-flex flex-column gap-1">
+                    @for (entry of phaseInfo()!.phase_log; track entry.id) {
+                      <div class="d-flex align-items-start gap-2 small">
+                        <span class="badge rounded-pill mt-1"
+                          [class.bg-primary]="entry.action === 'advanced'"
+                          [class.bg-warning]="entry.action === 'returned'"
+                          [class.bg-success]="entry.action === 'resolved'"
+                          [class.bg-secondary]="entry.action === 'assigned'"
+                          style="min-width:70px; font-size:.68rem;">
+                          {{ entry.action }}
+                        </span>
+                        <div>
+                          <span class="fw-semibold">{{ entry.phase_label ?? 'Assigned' }}</span>
+                          <span class="text-muted ms-1">by {{ entry.actor_email }}</span>
+                          @if (entry.note) { <span class="text-muted"> — {{ entry.note }}</span> }
+                          <div class="text-muted" style="font-size:.72rem;">{{ formatDate(entry.created_at) }}</div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+
+        <!-- ── No-flow direct approve/reject (pending, no workflow) ── -->
+        @if (document()!.status === 'pending_approval' && phaseInfo() && !phaseInfo()!.has_workflow && isCurrentAssignee()) {
+          <div class="card-footer bg-transparent px-4 py-3 border-top">
+            <p class="small text-muted mb-2">No process flow defined for this document type. You can approve or reject directly.</p>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-success" [disabled]="phaseActing()" (click)="openResolve('approved')">Approve</button>
+              <button class="btn btn-sm btn-outline-danger" [disabled]="phaseActing()" (click)="openResolve('rejected')">Reject</button>
+            </div>
+            @if (resolveDecision) {
+              <div class="mt-3 p-3 rounded border bg-light">
+                <p class="small fw-semibold mb-2">Confirm {{ resolveDecision }}?</p>
+                @if (resolveDecision === 'rejected') {
+                  <textarea class="form-control form-control-sm mb-2" rows="2" maxlength="1000"
+                    [(ngModel)]="resolveNote" placeholder="Rejection reason (required)"></textarea>
+                } @else {
+                  <input type="text" class="form-control form-control-sm mb-2" maxlength="1000"
+                    [(ngModel)]="resolveNote" placeholder="Note (optional)" />
+                }
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                    [disabled]="phaseActing()" (click)="submitResolve()">
+                    @if (phaseActing()) { <app-spinner size="sm" /> } Confirm
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="resolveDecision = null">Cancel</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Finance Staff / Admin workflow actions -->
+        @if (isStaffOrAdmin && availableActions.length > 0) {
+          <div class="card-footer bg-transparent px-4 py-3 border-top">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="small text-muted me-1">Actions:</span>
+              @for (action of availableActions; track action) {
+                <button class="btn btn-sm {{ actionVariant(action) }}"
+                        [disabled]="actionPending()"
+                        (click)="openConfirm(action)">
+                  @if (actionPending() && confirmAction() === action) { <app-spinner size="sm" /> }
+                  {{ actionLabel(action) }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Confirm action panel -->
+        @if (confirmAction()) {
+          <div class="card-footer bg-light px-4 py-3 border-top">
+            <p class="small fw-semibold mb-2">
+              Confirm: {{ actionLabel(confirmAction()!) }}
+            </p>
+            @if (confirmAction() === 'rejected') {
+              <div class="mb-2">
+                <label class="form-label small">Rejection reason <span class="text-danger">*</span></label>
+                <textarea class="form-control form-control-sm" rows="2" maxlength="1000"
+                          [(ngModel)]="actionNote" placeholder="Required note for rejection…"></textarea>
+              </div>
+            } @else {
+              <div class="mb-2">
+                <label class="form-label small">Note (optional)</label>
+                <input type="text" class="form-control form-control-sm" maxlength="1000"
+                       [(ngModel)]="actionNote" placeholder="Optional note…" />
+              </div>
+            }
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                      [disabled]="actionPending()"
+                      (click)="submitAction()">
+                @if (actionPending()) { <app-spinner size="sm" /> }
+                Confirm
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" [disabled]="actionPending()" (click)="cancelConfirm()">Cancel</button>
+            </div>
+          </div>
+        }
+
+        <!-- Student re-submission panel -->
+        @if (canResubmit) {
+          <div class="card-footer bg-warning-subtle border-top px-4 py-3">
+            <p class="fw-semibold mb-2 small">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+              </svg>
+              Action Required — upload a revised file to re-submit this document.
+            </p>
+            <div class="d-flex flex-column gap-2" style="max-width: 420px;">
+              <input #resubmitFileInput type="file" class="form-control form-control-sm"
+                     accept=".pdf,.jpg,.jpeg,.png" />
+              <input type="text" class="form-control form-control-sm" placeholder="Change note (optional)"
+                     [(ngModel)]="resubmitChangeNote" maxlength="1000" />
+              <button class="btn btn-warning btn-sm d-flex align-items-center gap-2"
+                      [disabled]="resubmitting() || !resubmitFileInput.files?.length"
+                      (click)="resubmit()">
+                @if (resubmitting()) { <app-spinner size="sm" /> }
+                Re-submit
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Status timeline -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h6 class="fw-semibold mb-3">Status Timeline</h6>
+          <app-status-timeline [document]="document()!" [history]="history()" />
+        </div>
+      </div>
+    </div>
+  </div>
+}

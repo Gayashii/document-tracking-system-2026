@@ -1,0 +1,106 @@
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a routerLink="/app/documents" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+  <h4 class="fw-bold mb-0">Submit Document</h4>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-4">Document Details</h6>
+
+        @if (loadingLookups()) {
+          <div class="text-center py-4"><app-spinner /></div>
+        } @else {
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="docTitle">Title <span class="text-danger">*</span></label>
+              <input id="docTitle" type="text" class="form-control" formControlName="title"
+                placeholder="e.g. Semester 1 Fee Payment"
+                [class.is-invalid]="title.invalid && title.touched" />
+              @if (title.invalid && title.touched) {
+                <div class="invalid-feedback">Title is required (min 3 characters).</div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="docType">Document Type <span class="text-danger">*</span></label>
+              <select id="docType" class="form-select" formControlName="document_type_id"
+                [class.is-invalid]="document_type_id.invalid && document_type_id.touched">
+                <option [ngValue]="null">Select type…</option>
+                @for (type of documentTypes(); track type.id) {
+                  <option [ngValue]="type.id">{{ type.name }}</option>
+                }
+              </select>
+              @if (document_type_id.invalid && document_type_id.touched) {
+                <div class="invalid-feedback">Document type is required.</div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="docDept">Department <span class="text-danger">*</span></label>
+              <select id="docDept" class="form-select" formControlName="department_id"
+                [class.is-invalid]="department_id.invalid && department_id.touched">
+                <option [ngValue]="null">Select department…</option>
+                @for (dept of departments(); track dept.id) {
+                  <option [ngValue]="dept.id">{{ dept.name }}</option>
+                }
+              </select>
+              @if (department_id.invalid && department_id.touched) {
+                <div class="invalid-feedback">Department is required.</div>
+              }
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold" for="academicYear">Academic Year</label>
+                <input id="academicYear" type="text" class="form-control" formControlName="academic_year"
+                  placeholder="e.g. 2024/2025" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold" for="amount">Financial Amount (LKR)</label>
+                <div class="input-group">
+                  <span class="input-group-text">Rs.</span>
+                  <input id="amount" type="text" class="form-control" formControlName="financial_amount"
+                    placeholder="0.00"
+                    [class.is-invalid]="financial_amount.invalid && financial_amount.touched" />
+                  @if (financial_amount.invalid && financial_amount.touched) {
+                    <div class="invalid-feedback">Enter a valid amount (e.g. 1500.00).</div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold d-block">File <span class="text-danger">*</span></label>
+              <app-file-upload (fileSelected)="onFileSelected($event)" />
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary d-flex align-items-center gap-2"
+                [disabled]="submitting() || form.invalid || !selectedFile">
+                @if (submitting()) { <app-spinner size="sm" /> }
+                Submit Document
+              </button>
+              <a routerLink="/app/documents" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h6 class="fw-semibold mb-3">Submission Guidelines</h6>
+        <ul class="small text-muted mb-0 ps-3">
+          <li class="mb-2">Accepted formats: PDF, JPEG, PNG</li>
+          <li class="mb-2">Maximum file size: 10 MB</li>
+          <li class="mb-2">Ensure the document is clearly legible</li>
+          <li>A unique reference number will be assigned upon submission</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

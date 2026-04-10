@@ -1,0 +1,15 @@
+<nav aria-label="Page navigation" *ngIf="totalPages() > 1">
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item" [class.disabled]="page() === 1">
+      <button class="page-link" (click)="go(page() - 1)" aria-label="Previous">&laquo;</button>
+    </li>
+    @for (p of pages(); track p) {
+      <li class="page-item" [class.active]="p === page()">
+        <button class="page-link" (click)="go(p)">{{ p }}</button>
+      </li>
+    }
+    <li class="page-item" [class.disabled]="page() === totalPages()">
+      <button class="page-link" (click)="go(page() + 1)" aria-label="Next">&raquo;</button>
+    </li>
+  </ul>
+</nav>

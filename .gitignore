@@ -1,0 +1,50 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Environment / Secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# ── Build Artifacts ───────────────────────────────────────────────────────────
+dist/
+build/
+client/dist/
+server/dist/
+client/.angular/
+
+# ── Uploaded Files ────────────────────────────────────────────────────────────
+server/uploads/
+
+# ── Coverage ──────────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.tgz
+.cache/
+tmp/
+temp/

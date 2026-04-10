@@ -1,0 +1,279 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Documents</h4>
+    <small class="text-muted">{{ total() }} document{{ total() !== 1 ? 's' : '' }} found</small>
+  </div>
+  @if (!isStaffOrAdmin || auth.currentUser?.role === 'admin') {
+    <a routerLink="/app/documents/upload" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+      </svg>
+      {{ isStudent ? 'Submit' : 'Upload' }}
+    </a>
+  }
+</div>
+
+<!-- Barcode scan (staff / admin only) -->
+@if (isStaffOrAdmin) {
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="input-group input-group-sm" style="max-width: 460px;">
+        <span class="input-group-text bg-white border-end-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5M.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/>
+          </svg>
+        </span>
+        <input type="text" class="form-control border-start-0 ps-0"
+          placeholder="Scan or enter barcode…"
+          [(ngModel)]="barcodeInput"
+          [disabled]="barcodeScanning() || barcodeImageDecoding()"
+          (keydown)="onBarcodeKeydown($event)"
+          autocomplete="off" />
+        <button class="btn btn-outline-secondary" type="button"
+          [disabled]="barcodeScanning() || barcodeImageDecoding()"
+          (click)="openBarcodeImagePicker()"
+          title="Upload barcode image">
+          @if (barcodeImageDecoding()) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+              <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z"/>
+            </svg>
+          }
+        </button>
+        <button class="btn btn-outline-secondary" type="button"
+          [disabled]="!barcodeInput.trim() || barcodeScanning() || barcodeImageDecoding()"
+          (click)="onBarcodeScan()">
+          @if (barcodeScanning()) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          } @else {
+            Go
+          }
+        </button>
+      </div>
+      <input type="file" #barcodeFileInput accept="image/*" style="display:none"
+        (change)="onBarcodeImageSelected($event)" />
+    </div>
+  </div>
+}
+
+<!-- Search bar + active filter tags -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body pb-2">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white border-end-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11"/>
+            </svg>
+          </span>
+          <input type="search" class="form-control border-start-0 ps-0"
+            placeholder="Search title, document type, student…"
+            [formControl]="searchControl" />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select class="form-select form-select-sm" [(ngModel)]="sortBy" (change)="applyFilters()">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active filter tags -->
+    @if (hasActiveFilters) {
+      <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+        @for (f of activeFilters; track f.key) {
+          <span class="badge rounded-pill bg-primary-subtle text-primary d-flex align-items-center gap-1 px-2 py-1">
+            {{ f.label }}
+            <button type="button" class="btn-close btn-close-sm ms-1" style="font-size:.55rem"
+              (click)="removeFilter(f.key)" aria-label="Remove filter"></button>
+          </span>
+        }
+        <button type="button" class="btn btn-link btn-sm p-0 text-muted" (click)="clearAllFilters()">
+          Clear all
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Filter panel -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-2">
+    <div class="row g-3 align-items-end">
+
+      <!-- Status checkboxes -->
+      <div class="col-12 col-md-auto">
+        <label class="form-label small fw-semibold mb-1">Status</label>
+        <div class="d-flex flex-wrap gap-2">
+          @for (s of allStatuses; track s.value) {
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="checkbox" [id]="'status-' + s.value"
+                [(ngModel)]="selectedStatuses[s.value]" (change)="applyFilters()" />
+              <label class="form-check-label small" [for]="'status-' + s.value">{{ s.label }}</label>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Document type dropdown -->
+      <div class="col-sm-6 col-md-3 col-lg-2">
+        <label class="form-label small fw-semibold mb-1">Document Type</label>
+        <select class="form-select form-select-sm" [(ngModel)]="typeFilter" (change)="applyFilters()">
+          <option value="">All Types</option>
+          @for (dt of documentTypes(); track dt.id) {
+            <option [value]="dt.id">{{ dt.name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Date range -->
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">From</label>
+        <input type="date" class="form-control form-control-sm"
+          [(ngModel)]="dateFrom" (change)="applyFilters()" />
+      </div>
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">To</label>
+        <input type="date" class="form-control form-control-sm"
+          [(ngModel)]="dateTo" (change)="applyFilters()" />
+      </div>
+
+      <!-- Financial amount range -->
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Amount min</label>
+        <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+          placeholder="0.00" [(ngModel)]="amountMin" (change)="applyFilters()" />
+      </div>
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Amount max</label>
+        <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+          placeholder="0.00" [(ngModel)]="amountMax" (change)="applyFilters()" />
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Quick-action confirm panel -->
+@if (quickAction()) {
+  <div class="alert alert-light border d-flex flex-column flex-sm-row align-items-sm-center gap-3 mb-3 p-3">
+    <div class="flex-grow-1">
+      <span class="fw-semibold small">
+        @if (quickAction()!.action === 'approved') { Confirm approval? }
+        @else { Confirm rejection? }
+      </span>
+      @if (quickAction()!.action === 'rejected') {
+        <input type="text" class="form-control form-control-sm mt-2"
+               placeholder="Rejection reason (required)"
+               [(ngModel)]="quickAction()!.note" maxlength="1000" />
+      } @else {
+        <input type="text" class="form-control form-control-sm mt-2"
+               placeholder="Note (optional)"
+               [(ngModel)]="quickAction()!.note" maxlength="1000" />
+      }
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+      <button class="btn btn-sm btn-primary" (click)="submitQuickAction()">Confirm</button>
+      <button class="btn btn-sm btn-outline-secondary" (click)="cancelQuickAction()">Cancel</button>
+    </div>
+  </div>
+}
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    @if (loading()) {
+      <table class="table mb-0" aria-label="Loading documents" aria-busy="true">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Reference No.</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (_ of [1,2,3,4,5]; track $index) {
+            <tr>
+              <td class="ps-4"><app-skeleton width="120px" /></td>
+              <td><app-skeleton width="60%" /></td>
+              <td><app-skeleton width="80px" /></td>
+              <td><app-skeleton width="90px" height="1.25rem" radius="1rem" /></td>
+              <td><app-skeleton width="80px" /></td>
+              <td class="text-end pe-3"><app-skeleton width="60px" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else if (documents().length === 0) {
+      <app-empty-state
+        [heading]="isStudent ? 'No documents submitted yet.' : hasActiveFilters ? 'No documents match your filters.' : 'No documents found.'"
+        [subtext]="isStudent ? 'Submit your first document to get started.' : ''"
+        [actionLabel]="hasActiveFilters ? 'Clear filters' : ''"
+        (action)="clearAllFilters()"
+        icon='<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1"/></svg>'
+      />
+    } @else {
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Reference No.</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of documents(); track doc.id) {
+            <tr>
+              <td class="ps-4">
+                <code class="small">{{ doc.referenceNumber }}</code>
+              </td>
+              <td>
+                <span class="fw-semibold small">{{ doc.title }}</span>
+                @if (doc.status === 'rejected' && isStudent) {
+                  <span class="badge bg-danger-subtle text-danger ms-2 small">Action Required</span>
+                }
+              </td>
+              <td><span class="small text-muted">{{ doc.documentType }}</span></td>
+              <td>
+                <app-status-badge [status]="doc.status" />
+              </td>
+              <td><small class="text-muted">{{ formatDate(doc.submittedAt) }}</small></td>
+              <td class="text-end pe-3">
+                <div class="d-flex justify-content-end align-items-center gap-1">
+                  @if (isStaffOrAdmin && (doc.status === 'submitted' || doc.status === 'pending_approval') && !doc.currentWorkflowStepId) {
+                    <button class="btn btn-sm btn-success"
+                            [disabled]="!!quickAction()"
+                            (click)="openQuickAction(doc, 'approved')">
+                      Approve
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            [disabled]="!!quickAction()"
+                            (click)="openQuickAction(doc, 'rejected')">
+                      Reject
+                    </button>
+                  }
+                  <a [routerLink]="['/app/documents', doc.id]" class="btn btn-sm btn-outline-primary">View</a>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+  @if (!loading() && totalPages() > 1) {
+    <div class="card-footer bg-transparent d-flex justify-content-center py-3">
+      <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+    </div>
+  }
+</div>

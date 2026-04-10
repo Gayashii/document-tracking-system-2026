@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+coverage/
+server/uploads/
+client/.angular/
+*.min.js
+*.min.css

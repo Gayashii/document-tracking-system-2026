@@ -1,0 +1,40 @@
+<div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+  <span class="fw-semibold small">Notifications</span>
+  <div class="d-flex align-items-center gap-2">
+    @if (unreadCount > 0) {
+      <button class="btn btn-link btn-sm p-0 text-decoration-none small"
+              [disabled]="markingAll()" (click)="markAllRead()">
+        @if (markingAll()) { <app-spinner size="sm" /> } @else { Mark all read }
+      </button>
+    }
+    <button class="btn btn-link btn-sm p-0 text-muted" (click)="closed.emit()" aria-label="Close">✕</button>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="text-center py-4"><app-spinner /></div>
+} @else if (notifications().length === 0) {
+  <div class="text-center text-muted py-4 small">No notifications</div>
+} @else {
+  <div style="max-height: 380px; overflow-y: auto;">
+    @for (notif of notifications(); track notif.id) {
+      <div class="px-3 py-2 border-bottom notification-item"
+           [class.bg-light]="notif.status === 'pending'"
+           style="cursor: pointer;"
+           (click)="markRead(notif)">
+        <div class="d-flex align-items-start gap-2">
+          @if (notif.status === 'pending') {
+            <span class="mt-1 flex-shrink-0" style="width:8px; height:8px; border-radius:50%; background:#0d6efd; display:inline-block;"></span>
+          } @else {
+            <span class="mt-1 flex-shrink-0" style="width:8px; height:8px; display:inline-block;"></span>
+          }
+          <div class="flex-grow-1 min-w-0">
+            <div class="small fw-semibold text-truncate">{{ notif.subject }}</div>
+            <div class="small text-muted" style="white-space: normal; word-break: break-word;">{{ notif.body }}</div>
+            <div class="text-muted" style="font-size: 0.7rem;">{{ formatDate(notif.created_at) }}</div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

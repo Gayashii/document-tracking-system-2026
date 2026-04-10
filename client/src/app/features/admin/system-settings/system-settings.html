@@ -1,0 +1,54 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">System Settings</h4>
+    <small class="text-muted">Global configuration for this application.</small>
+  </div>
+  <button class="btn btn-primary btn-sm d-flex align-items-center gap-2"
+    [disabled]="saving() || loading()" (click)="saveAll()">
+    @if (saving()) { <app-spinner size="sm" /> }
+    Save All
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="text-center py-5"><app-spinner /></div>
+} @else {
+  <div class="d-flex flex-column gap-3">
+    @for (key of metaKeys; track key) {
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="row align-items-center g-3">
+            <div class="col-md-4">
+              <div class="fw-semibold small">{{ getMeta(key).label }}</div>
+              <div class="text-muted" style="font-size: 0.8rem;">{{ getMeta(key).description }}</div>
+              @if (getRow(key)) {
+                <div class="text-muted mt-1" style="font-size: 0.72rem;">
+                  Last updated {{ formatDate(getRow(key)!.updated_at) }}
+                  @if (getRow(key)!.updated_by_email) { by {{ getRow(key)!.updated_by_email }} }
+                </div>
+              }
+            </div>
+            <div class="col-md-4">
+              @if (getMeta(key).type === 'boolean') {
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" [id]="'setting-' + key"
+                    [checked]="editValues[key] === 'true'"
+                    (change)="editValues[key] = $any($event.target).checked ? 'true' : 'false'" />
+                  <label class="form-check-label small" [for]="'setting-' + key">
+                    {{ editValues[key] === 'true' ? 'Enabled' : 'Disabled' }}
+                  </label>
+                </div>
+              } @else if (getMeta(key).type === 'number') {
+                <input type="number" class="form-control form-control-sm" [id]="'setting-' + key"
+                  [(ngModel)]="editValues[key]" min="0" />
+              } @else {
+                <input type="text" class="form-control form-control-sm" [id]="'setting-' + key"
+                  [(ngModel)]="editValues[key]" />
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

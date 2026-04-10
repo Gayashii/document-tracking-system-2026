@@ -1,0 +1,61 @@
+<h5 class="fw-bold mb-1">Sign In</h5>
+<p class="text-muted small mb-4">Enter your credentials to access the system.</p>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="mb-3">
+    <label class="form-label fw-semibold" for="email">Email Address</label>
+    <input
+      id="email"
+      type="email"
+      class="form-control"
+      formControlName="email"
+      placeholder="you@example.com"
+      autocomplete="email"
+      [class.is-invalid]="email.invalid && email.touched"
+    />
+    @if (email.invalid && email.touched) {
+      <div class="invalid-feedback">Enter a valid email address.</div>
+    }
+  </div>
+
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <label class="form-label fw-semibold mb-0" for="password">Password</label>
+      <a routerLink="/forgot-password" class="small text-decoration-none">Forgot password?</a>
+    </div>
+    <div class="input-group">
+      <input
+        id="password"
+        [type]="showPassword() ? 'text' : 'password'"
+        class="form-control"
+        formControlName="password"
+        placeholder="••••••••"
+        autocomplete="current-password"
+        [class.is-invalid]="password.invalid && password.touched"
+      />
+      <button type="button" class="btn btn-outline-secondary" (click)="showPassword.update(v => !v)" tabindex="-1">
+        {{ showPassword() ? 'Hide' : 'Show' }}
+      </button>
+      @if (password.invalid && password.touched) {
+        <div class="invalid-feedback">Password is required.</div>
+      }
+    </div>
+  </div>
+
+  <button
+    type="submit"
+    class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
+    [disabled]="submitting()"
+  >
+    @if (submitting()) {
+      <app-spinner size="sm" />
+    }
+    Sign In
+  </button>
+</form>
+
+<hr class="my-4" />
+<p class="text-center small mb-0">
+  Don't have an account?
+  <a routerLink="/register" class="text-decoration-none fw-semibold">Register</a>
+</p>

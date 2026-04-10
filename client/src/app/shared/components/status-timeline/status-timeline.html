@@ -1,0 +1,124 @@
+<div class="status-timeline">
+  @for (step of visibleSteps(); track step; let last = $last) {
+    <div class="timeline-step" [class.completed]="stepCompleted(step)" [class.active]="stepActive(step)">
+      <div class="d-flex align-items-start gap-3">
+        <!-- Circle indicator -->
+        <div class="timeline-dot flex-shrink-0"
+             [class.timeline-dot--done]="stepCompleted(step)"
+             [class.timeline-dot--active]="stepActive(step)">
+          @if (stepCompleted(step)) {
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+            </svg>
+          } @else if (stepActive(step)) {
+            <div class="timeline-dot-pulse"></div>
+          }
+        </div>
+
+        <!-- Content -->
+        <div class="pb-3 flex-grow-1">
+          <div class="fw-semibold small" [class.text-success]="stepCompleted(step)"
+               [class.text-primary]="stepActive(step)"
+               [class.text-muted]="!stepCompleted(step) && !stepActive(step)">
+            {{ stepLabels[step] }}
+          </div>
+          @if (historyFor(step); as entry) {
+            <div class="text-muted" style="font-size: 0.75rem;">
+              {{ formatDate(entry.createdAt) }}
+              @if (entry.changedByEmail) {
+                · {{ entry.changedByEmail }}
+              }
+              @if (entry.note) {
+                <div class="fst-italic mt-1">"{{ entry.note }}"</div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Connector line (not after last visible step) -->
+      @if (!last) {
+        <div class="timeline-line" [class.timeline-line--done]="stepCompleted(step)"></div>
+      }
+    </div>
+  }
+
+  <!-- Rejection branch -->
+  @if (isRejected()) {
+    <div class="timeline-step">
+      <div class="d-flex align-items-start gap-3">
+        <div class="timeline-dot timeline-dot--rejected flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+          </svg>
+        </div>
+        <div class="pb-1 flex-grow-1">
+          <div class="fw-semibold small text-danger">Rejected</div>
+          @if (historyFor('rejected'); as entry) {
+            <div class="text-muted" style="font-size: 0.75rem;">
+              {{ formatDate(entry.createdAt) }}
+              @if (entry.changedByEmail) {
+                · {{ entry.changedByEmail }}
+              }
+              @if (entry.note) {
+                <div class="fst-italic mt-1 text-danger">"{{ entry.note }}"</div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<style>
+  .status-timeline {
+    padding-left: 0;
+  }
+  .timeline-step {
+    position: relative;
+  }
+  .timeline-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin-top: 2px;
+  }
+  .timeline-dot--done {
+    background: #198754;
+    border-color: #198754;
+  }
+  .timeline-dot--active {
+    border-color: #0d6efd;
+    background: #e7f0ff;
+    color: #0d6efd;
+  }
+  .timeline-dot--rejected {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+  }
+  .timeline-dot-pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #0d6efd;
+  }
+  .timeline-line {
+    position: relative;
+    left: 12px;
+    width: 2px;
+    height: 16px;
+    background: #dee2e6;
+    margin-bottom: 0;
+  }
+  .timeline-line--done {
+    background: #198754;
+  }
+</style>

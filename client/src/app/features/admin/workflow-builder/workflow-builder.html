@@ -1,0 +1,112 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Workflow Builder</h4>
+  <button class="btn btn-primary btn-sm" (click)="showCreate = !showCreate">+ New Workflow</button>
+</div>
+
+<!-- Create form -->
+@if (showCreate) {
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-4">
+          <label class="form-label small fw-semibold mb-1">Workflow Name</label>
+          <input class="form-control form-control-sm" [(ngModel)]="newName" placeholder="e.g. Scholarship Processing" />
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label small fw-semibold mb-1">Document Type</label>
+          <select class="form-select form-select-sm" [(ngModel)]="newTypeId">
+            <option [ngValue]="null">— None —</option>
+            @for (dt of documentTypes(); track dt.id) {
+              <option [ngValue]="dt.id">{{ dt.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-sm-4 d-flex gap-2">
+          <button class="btn btn-sm btn-primary flex-grow-1" [disabled]="saving() || !newName" (click)="submitCreate()">
+            @if (saving()) { <app-spinner size="sm" /> } Create
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="showCreate = false">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Workflow list -->
+@if (loading()) {
+  <div class="text-center py-5"><app-spinner /></div>
+} @else if (workflows().length === 0) {
+  <div class="text-center py-5 text-muted">No workflows defined yet.</div>
+} @else {
+  <div class="d-flex flex-column gap-3">
+    @for (w of workflows(); track w.id) {
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex align-items-center justify-content-between py-3 px-4">
+          <div>
+            <span class="fw-semibold">{{ w.name }}</span>
+            @if (w.document_type_name) {
+              <span class="badge bg-secondary-subtle text-secondary ms-2 small">{{ w.document_type_name }}</span>
+            }
+            <span class="text-muted small ms-2">{{ w.step_count ?? 0 }} phase{{ (w.step_count ?? 0) !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="d-flex gap-2">
+            @if (editingId !== w.id) {
+              <button class="btn btn-sm btn-outline-primary" (click)="loadAndEdit(w)">Edit Phases</button>
+              <button class="btn btn-sm btn-outline-danger" (click)="removeWorkflow(w)">Delete</button>
+            }
+          </div>
+        </div>
+
+        <!-- Phase editor -->
+        @if (editingId === w.id) {
+          <div class="card-body px-4 pb-4">
+            <p class="small text-muted mb-3">Define the ordered phases for this workflow. The last phase will be the decision point (approve/reject).</p>
+
+            @if (draftSteps.length === 0) {
+              <p class="text-muted small fst-italic">No phases yet. Add one below.</p>
+            }
+
+            <div class="d-flex flex-column gap-2 mb-3">
+              @for (step of draftSteps; track $index) {
+                <div class="d-flex align-items-center gap-2 p-2 rounded border bg-light">
+                  <span class="badge bg-secondary rounded-pill me-1" style="min-width:2rem;">{{ $index + 1 }}</span>
+
+                  <input class="form-control form-control-sm" style="max-width:220px;"
+                    [(ngModel)]="draftSteps[$index].phase_label"
+                    placeholder="Phase label (e.g. Initial Review)" />
+
+                  <select class="form-select form-select-sm" style="max-width:240px;"
+                    [(ngModel)]="draftSteps[$index].assigned_user_id">
+                    <option [ngValue]="null">— Assign staff —</option>
+                    @for (u of staffUsers(); track u.id) {
+                      <option [ngValue]="u.id">{{ u.email }}</option>
+                    }
+                  </select>
+
+                  @if ($index === draftSteps.length - 1) {
+                    <span class="badge bg-success-subtle text-success small">Final</span>
+                  }
+
+                  <div class="d-flex gap-1 ms-auto">
+                    <button class="btn btn-sm btn-outline-secondary" [disabled]="$index === 0" (click)="moveUp($index)" title="Move up">↑</button>
+                    <button class="btn btn-sm btn-outline-secondary" [disabled]="$index === draftSteps.length - 1" (click)="moveDown($index)" title="Move down">↓</button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="removeStep($index)">✕</button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="addStep()">+ Add Phase</button>
+              <button class="btn btn-sm btn-primary d-flex align-items-center gap-2 ms-auto"
+                [disabled]="saving() || draftSteps.length === 0" (click)="saveSteps()">
+                @if (saving()) { <app-spinner size="sm" /> } Save Phases
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

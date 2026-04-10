@@ -1,0 +1,153 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">User Management</h4>
+    <small class="text-muted">{{ total() }} user{{ total() !== 1 ? 's' : '' }}</small>
+  </div>
+  <button class="btn btn-primary btn-sm" (click)="openCreate()">+ Create User</button>
+</div>
+
+<!-- Create user modal -->
+@if (showCreateModal) {
+  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.4);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create User</h5>
+          <button type="button" class="btn-close" (click)="showCreateModal = false"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email</label>
+            <input type="email" class="form-control" [(ngModel)]="createEmail" placeholder="user@example.com" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Password</label>
+            <input type="password" class="form-control" [(ngModel)]="createPassword" placeholder="Min 8 chars" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Role</label>
+            <select class="form-select" [(ngModel)]="createRole">
+              @for (r of roles; track r) { <option [value]="r">{{ r }}</option> }
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary btn-sm" (click)="showCreateModal = false">Cancel</button>
+          <button class="btn btn-primary btn-sm d-flex align-items-center gap-2"
+            [disabled]="saving() || !createEmail || !createPassword"
+            (click)="submitCreate()">
+            @if (saving()) { <app-spinner size="sm" /> }
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-2">
+    <div class="row g-2">
+      <div class="col-sm-5 col-md-4">
+        <input type="search" class="form-control form-control-sm" placeholder="Search by email…"
+          [(ngModel)]="search" (search)="applyFilters()" (keydown.enter)="applyFilters()" />
+      </div>
+      <div class="col-sm-3 col-md-2">
+        <select class="form-select form-select-sm" [(ngModel)]="roleFilter" (change)="applyFilters()">
+          <option value="">All Roles</option>
+          @for (r of roles; track r) { <option [value]="r">{{ r }}</option> }
+        </select>
+      </div>
+      <div class="col-sm-4 col-md-2">
+        <select class="form-select form-select-sm" [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    @if (loading()) {
+      <div class="text-center py-5"><app-spinner /></div>
+    } @else if (users().length === 0) {
+      <div class="text-center py-5 text-muted">No users found.</div>
+    } @else {
+      <table class="table table-hover mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Last Login</th>
+            <th>Joined</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="ps-4 fw-semibold">{{ user.email }}</td>
+              <td>
+                @if (editingId === user.id) {
+                  <select class="form-select form-select-sm" [(ngModel)]="editRole" style="max-width: 130px;">
+                    @for (r of roles; track r) { <option [value]="r">{{ r }}</option> }
+                  </select>
+                } @else {
+                  <span class="badge bg-secondary rounded-pill">{{ user.role }}</span>
+                }
+              </td>
+              <td>
+                @if (editingId === user.id) {
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="editIsActive" />
+                    <label class="form-check-label small">{{ editIsActive ? 'Active' : 'Inactive' }}</label>
+                  </div>
+                } @else if (user.is_active) {
+                  <span class="badge bg-success-subtle text-success rounded-pill">Active</span>
+                } @else {
+                  <span class="badge bg-secondary-subtle text-secondary rounded-pill">Inactive</span>
+                }
+              </td>
+              <td class="text-muted">{{ formatDate(user.last_login_at) }}</td>
+              <td class="text-muted">{{ formatDate(user.created_at) }}</td>
+              <td class="text-end pe-3">
+                <div class="d-flex justify-content-end gap-1">
+                  @if (editingId === user.id) {
+                    <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                      [disabled]="saving()" (click)="saveEdit(user)">
+                      @if (saving()) { <app-spinner size="sm" /> } Save
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="cancelEdit()">Cancel</button>
+                  } @else {
+                    <button class="btn btn-sm btn-outline-primary" (click)="startEdit(user)">Edit</button>
+                    @if (user.is_active) {
+                      <button class="btn btn-sm btn-outline-danger"
+                        [disabled]="!canDeactivate(user)"
+                        [title]="user.id === currentUserId ? 'You cannot deactivate your own account'
+                               : user.role === 'admin' && activeAdminCount() <= 1 ? 'Cannot deactivate the last active admin'
+                               : ''"
+                        (click)="canDeactivate(user) && deactivate(user)">Deactivate</button>
+                    }
+                    <button class="btn btn-sm btn-outline-secondary" (click)="resetMfa(user)"
+                      title="Force MFA re-enrolment">MFA Reset</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+  @if (!loading() && totalPages() > 1) {
+    <div class="card-footer bg-transparent d-flex justify-content-center py-3">
+      <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+    </div>
+  }
+</div>

@@ -1,0 +1,126 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Audit Trail</h4>
+    <small class="text-muted">{{ total() }} event{{ total() !== 1 ? 's' : '' }} found</small>
+  </div>
+  <button class="btn btn-sm btn-outline-secondary" [disabled]="exporting()" (click)="exportCsv()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 1-.708.708z"/>
+    </svg>
+    Export CSV
+  </button>
+</div>
+
+@if (preFilterLabel) {
+  <div class="alert alert-info py-2 px-3 d-flex align-items-center justify-content-between mb-3">
+    <small>{{ preFilterLabel }}</small>
+    <button type="button" class="btn btn-link btn-sm p-0 text-info" (click)="clearFilters()">Clear</button>
+  </div>
+}
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-6 col-md-3">
+        <label class="form-label small fw-semibold mb-1">Actor Email</label>
+        <input type="search" class="form-control form-control-sm" placeholder="e.g. staff@example.com"
+          [(ngModel)]="actorEmail" (search)="applyFilters()" (keydown.enter)="applyFilters()" />
+      </div>
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Action</label>
+        <select class="form-select form-select-sm" [(ngModel)]="actionFilter" (change)="applyFilters()">
+          <option value="">All Actions</option>
+          @for (a of allActions; track a) {
+            <option [value]="a">{{ a }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">Entity Type</label>
+        <input type="text" class="form-control form-control-sm" placeholder="e.g. document"
+          [(ngModel)]="entityType" (keydown.enter)="applyFilters()" (change)="applyFilters()" />
+      </div>
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">From</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="dateFrom" (change)="applyFilters()" />
+      </div>
+      <div class="col-sm-6 col-md-2">
+        <label class="form-label small fw-semibold mb-1">To</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="dateTo" (change)="applyFilters()" />
+      </div>
+      <div class="col-sm-6 col-md-1 d-flex align-items-end">
+        <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    @if (loading()) {
+      <div class="text-center py-5"><app-spinner /></div>
+    } @else if (entries().length === 0) {
+      <div class="text-center py-5 text-muted">No audit events found.</div>
+    } @else {
+      <table class="table table-hover mb-0" style="font-size: 0.82rem;">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4" style="width: 160px;">Timestamp</th>
+            <th style="width: 180px;">Actor</th>
+            <th style="width: 180px;">Action</th>
+            <th style="width: 90px;">Entity Type</th>
+            <th style="width: 70px;">Entity ID</th>
+            <th style="width: 110px;">IP Address</th>
+            <th class="pe-3">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.id) {
+            <tr (click)="toggleExpand(entry.id)" style="cursor: pointer;"
+              [class.table-active]="isExpanded(entry.id)">
+              <td class="ps-4 text-muted">{{ formatDate(entry.createdAt) }}</td>
+              <td>
+                <div class="fw-semibold">{{ entry.actorEmail ?? 'System' }}</div>
+                @if (entry.actorRole) {
+                  <small class="text-muted">{{ entry.actorRole }}</small>
+                }
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary fw-normal">{{ entry.action }}</span>
+              </td>
+              <td class="text-muted">{{ entry.entityType }}</td>
+              <td class="text-muted">{{ entry.entityId ?? '—' }}</td>
+              <td class="text-muted font-monospace" style="font-size: 0.75rem;">{{ entry.ipAddress ?? '—' }}</td>
+              <td class="pe-3">
+                @if (entry.metadata) {
+                  <button class="btn btn-link btn-sm p-0 text-decoration-none"
+                    (click)="$event.stopPropagation(); toggleExpand(entry.id)">
+                    {{ isExpanded(entry.id) ? '▲ Hide' : '▼ Show' }}
+                  </button>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+            </tr>
+            @if (isExpanded(entry.id) && entry.metadata) {
+              <tr class="table-active">
+                <td colspan="7" class="px-4 pb-3 pt-0">
+                  <pre class="bg-light rounded p-3 mb-0 small"
+                    style="white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto;">{{ formatJson(entry.metadata) }}</pre>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+  @if (!loading() && totalPages() > 1) {
+    <div class="card-footer bg-transparent d-flex justify-content-center py-3">
+      <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+    </div>
+  }
+</div>

@@ -1,0 +1,75 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Departments</h4>
+  <button class="btn btn-primary btn-sm" (click)="showCreate = !showCreate">+ Add Department</button>
+</div>
+
+@if (showCreate) {
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-4"><label class="form-label small fw-semibold mb-1">Name</label>
+          <input class="form-control form-control-sm" [(ngModel)]="newName" placeholder="Finance Section" /></div>
+        <div class="col-sm-2"><label class="form-label small fw-semibold mb-1">Code</label>
+          <input class="form-control form-control-sm" [(ngModel)]="newCode" placeholder="FIN" /></div>
+        <div class="col-sm-4"><label class="form-label small fw-semibold mb-1">Description</label>
+          <input class="form-control form-control-sm" [(ngModel)]="newDesc" placeholder="Optional" /></div>
+        <div class="col-sm-2 d-flex gap-2">
+          <button class="btn btn-sm btn-primary flex-grow-1" [disabled]="saving() || !newName || !newCode" (click)="submitCreate()">
+            @if (saving()) { <app-spinner size="sm" /> } Save
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="showCreate = false">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="card border-0 shadow-sm">
+  @if (loading()) {
+    <div class="text-center py-5"><app-spinner /></div>
+  } @else if (depts().length === 0) {
+    <div class="text-center py-5 text-muted">No departments configured.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Name</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of depts(); track d.id) {
+            <tr>
+              <td class="ps-4 fw-semibold">
+                @if (editingId === d.id) { <input class="form-control form-control-sm" [(ngModel)]="editName" /> }
+                @else { {{ d.name }} }
+              </td>
+              <td>
+                @if (editingId === d.id) { <input class="form-control form-control-sm" [(ngModel)]="editCode" style="max-width:80px;" /> }
+                @else { <code>{{ d.code }}</code> }
+              </td>
+              <td class="text-muted">
+                @if (editingId === d.id) { <input class="form-control form-control-sm" [(ngModel)]="editDesc" /> }
+                @else { {{ d.description ?? '—' }} }
+              </td>
+              <td class="text-end pe-3">
+                <div class="d-flex justify-content-end gap-1">
+                  @if (editingId === d.id) {
+                    <button class="btn btn-sm btn-primary" [disabled]="saving()" (click)="saveEdit(d)">Save</button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="editingId = null">Cancel</button>
+                  } @else {
+                    <button class="btn btn-sm btn-outline-primary" (click)="startEdit(d)">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="remove(d)">Delete</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

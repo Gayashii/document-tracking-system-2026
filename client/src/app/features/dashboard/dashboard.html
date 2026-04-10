@@ -1,0 +1,137 @@
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">Welcome, {{ user?.fullName }}</h4>
+  <p class="text-muted small mb-0">
+    @if (isStudent) { Track the status of your submitted documents. }
+    @if (isFinanceStaff) { Review and process incoming financial documents. }
+    @if (isAdmin) { System overview — manage users and documents. }
+  </p>
+</div>
+
+@if (loading()) {
+  <div class="text-center py-5"><app-spinner /></div>
+} @else {
+  <!-- Student: Action Required banner for rejected docs -->
+  @if (isStudent && rejectedDocs().length > 0) {
+    <div class="alert alert-danger d-flex align-items-center gap-3 mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16">
+        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+      </svg>
+      <div class="flex-grow-1">
+        <strong>Action Required</strong> —
+        {{ rejectedDocs().length }} document{{ rejectedDocs().length > 1 ? 's' : '' }} rejected.
+        Please re-submit the revised file{{ rejectedDocs().length > 1 ? 's' : '' }}.
+      </div>
+      <a routerLink="/app/documents" [queryParams]="{ status: 'rejected' }" class="btn btn-sm btn-danger">
+        View Rejected
+      </a>
+    </div>
+  }
+
+  <!-- Finance staff: pending approval queue notice -->
+  @if (isFinanceStaff && pendingApprovalDocs().length > 0) {
+    <div class="alert alert-warning d-flex align-items-center gap-3 mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16">
+        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+      </svg>
+      <div class="flex-grow-1">
+        <strong>{{ pendingApprovalDocs().length }} document{{ pendingApprovalDocs().length > 1 ? 's' : '' }}</strong>
+        pending your review.
+      </div>
+      <a routerLink="/app/documents" class="btn btn-sm btn-warning">
+        Review Queue
+      </a>
+    </div>
+  }
+
+  <!-- Summary cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3 p-4">
+          <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width: 48px; height: 48px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="text-primary" viewBox="0 0 16 16">
+              <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1"/>
+            </svg>
+          </div>
+          <div>
+            <div class="h4 fw-bold mb-0">{{ totalDocs() }}</div>
+            <div class="text-muted small">{{ isStudent ? 'My Documents' : 'Total Documents' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @for (sc of statusCounts(); track sc.status) {
+      <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"
+             [class.border-danger]="sc.status === 'rejected' && isStudent && sc.count > 0"
+             [class.border-2]="sc.status === 'rejected' && isStudent && sc.count > 0">
+          <div class="card-body d-flex align-items-center gap-3 p-4">
+            <div>
+              <div class="h4 fw-bold mb-1">{{ sc.count }}</div>
+              <app-status-badge [status]="sc.status" />
+            </div>
+            @if (sc.status === 'rejected' && isStudent && sc.count > 0) {
+              <a routerLink="/app/documents" class="ms-auto btn btn-sm btn-outline-danger">Re-submit</a>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Student tracker / Finance staff queue / Recent documents -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center px-4 py-3">
+      <span class="fw-semibold">
+        @if (isStudent) { My Documents }
+        @else if (isFinanceStaff) { Pending Review Queue }
+        @else { Recent Documents }
+      </span>
+      <a routerLink="/app/documents" class="small text-decoration-none">View all →</a>
+    </div>
+    @if (recentDocs().length === 0) {
+      <div class="card-body text-center py-5 text-muted">
+        <p class="mb-2">No documents yet.</p>
+        @if (isStudent) {
+          <a routerLink="/app/documents/upload" class="btn btn-sm btn-primary">Submit your first document</a>
+        }
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Reference No.</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Last Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (doc of recentDocs(); track doc.id) {
+              <tr [class.table-danger]="doc.status === 'rejected' && isStudent">
+                <td class="ps-4"><code class="small">{{ doc.referenceNumber }}</code></td>
+                <td>
+                  <span class="small fw-semibold">{{ doc.title }}</span>
+                  @if (doc.status === 'rejected' && isStudent) {
+                    <span class="badge bg-danger ms-2 small">Action Required</span>
+                  }
+                </td>
+                <td><app-status-badge [status]="doc.status" /></td>
+                <td><small class="text-muted">{{ formatDate(doc.updatedAt) }}</small></td>
+                <td class="text-end pe-3">
+                  <a [routerLink]="['/app/documents', doc.id]" class="btn btn-sm btn-outline-primary">
+                    @if (doc.status === 'rejected' && isStudent) { Re-submit } @else { View }
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

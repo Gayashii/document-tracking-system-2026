@@ -1,0 +1,47 @@
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a [routerLink]="['/app/documents', documentId]" class="btn btn-sm btn-outline-secondary">&larr; Back to Document</a>
+  <h4 class="fw-bold mb-0">Version History</h4>
+</div>
+
+@if (loading()) {
+  <div class="text-center py-5"><app-spinner /></div>
+} @else if (versions().length === 0) {
+  <div class="alert alert-info">No previous versions found. This is the original submission.</div>
+} @else {
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="px-4 py-3">Version</th>
+              <th class="py-3">Submitted</th>
+              <th class="py-3">Submitted By</th>
+              <th class="py-3">Change Note</th>
+              <th class="py-3">File</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of versions(); track v.id) {
+              <tr>
+                <td class="px-4 py-3">
+                  <span class="badge bg-secondary">v{{ v.versionNumber }}</span>
+                </td>
+                <td class="py-3 text-muted small">{{ formatDate(v.createdAt) }}</td>
+                <td class="py-3 small">{{ v.uploadedByEmail }}</td>
+                <td class="py-3 small text-muted">{{ v.changeNote || '—' }}</td>
+                <td class="py-3">
+                  <a [href]="downloadUrl(v.id)"
+                     class="btn btn-sm btn-outline-primary"
+                     target="_blank">
+                    Download
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

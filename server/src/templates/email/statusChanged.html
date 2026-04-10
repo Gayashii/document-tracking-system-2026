@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Document Status Updated</title></head>
+<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #1a3c5e; padding: 20px 24px; border-radius: 6px 6px 0 0;">
+    <h2 style="color: #fff; margin: 0; font-size: 18px;">PGI Document Tracking System</h2>
+    <p style="color: #a8c0d6; margin: 4px 0 0; font-size: 13px;">Postgraduate Institute, University of Sri Jayewardenepura</p>
+  </div>
+  <div style="background: #fff; border: 1px solid #e0e0e0; border-top: none; padding: 28px 24px; border-radius: 0 0 6px 6px;">
+    <p style="font-size: 15px;">Dear {{recipientName}},</p>
+    <p>The status of your document has been updated.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+      <tr><td style="padding: 8px 12px; background: #f5f7fa; font-weight: bold; width: 40%; border: 1px solid #e0e0e0;">Reference Number</td><td style="padding: 8px 12px; border: 1px solid #e0e0e0;">{{referenceNumber}}</td></tr>
+      <tr><td style="padding: 8px 12px; background: #f5f7fa; font-weight: bold; border: 1px solid #e0e0e0;">Document Title</td><td style="padding: 8px 12px; border: 1px solid #e0e0e0;">{{title}}</td></tr>
+      <tr><td style="padding: 8px 12px; background: #f5f7fa; font-weight: bold; border: 1px solid #e0e0e0;">Previous Status</td><td style="padding: 8px 12px; border: 1px solid #e0e0e0;">{{fromStatus}}</td></tr>
+      <tr><td style="padding: 8px 12px; background: #f5f7fa; font-weight: bold; border: 1px solid #e0e0e0;">New Status</td><td style="padding: 8px 12px; border: 1px solid #e0e0e0;">{{toStatus}}</td></tr>
+      <tr><td style="padding: 8px 12px; background: #f5f7fa; font-weight: bold; border: 1px solid #e0e0e0;">Updated At</td><td style="padding: 8px 12px; border: 1px solid #e0e0e0;">{{updatedAt}}</td></tr>
+    </table>
+    {{#note}}<div style="background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; margin: 16px 0; font-size: 14px;"><strong>Note from staff:</strong><br>{{note}}</div>{{/note}}
+    <p style="font-size: 14px; color: #666;">Log in to the system to view full details.</p>
+  </div>
+  <p style="font-size: 12px; color: #999; text-align: center; margin-top: 16px;">This is an automated message. Please do not reply to this email.</p>
+</body>
+</html>
