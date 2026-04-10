@@ -55,7 +55,7 @@ Install the following before proceeding:
 ### Step 1 — Clone the repository
 
 ```bash
-git clone https://github.com/malith-gammanpila/doc-tracking-system.git
+git clone https://github.com/Gayashii/document-tracking-system-2026.git
 cd doc-tracking-system
 ```
 
@@ -547,4 +547,3 @@ doc-tracking-system/
 - **Tier 2 — Server:** Node.js/Express — JWT authentication, RBAC middleware, workflow engine, audit logging, email dispatch
 - **Tier 3 — Data:** PostgreSQL 16 via Knex.js — documents, users, workflows, audit logs; uploaded files stored on the local filesystem under `server/uploads/`
 
-See [CLAUDE.md](CLAUDE.md) for the full feature specification, workflow rules, data model, and folder structure reference.
